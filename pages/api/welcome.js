@@ -6,33 +6,43 @@ export default async function handler(req, res) {
   const canvas = createCanvas(800, 300);
   const ctx = canvas.getContext('2d');
 
-  ctx.fillStyle = '#111827';
+  // Arka plan rengi
+  ctx.fillStyle = '#f0f4ff'; // Açık mavi ton
   ctx.fillRect(0, 0, 800, 300);
 
-  ctx.fillStyle = '#00ffff';
-  ctx.font = 'bold 40px Sans';
-  ctx.fillText('HOŞ GELDİN!', 50, 60);
+  // Kullanıcı adı
+  ctx.fillStyle = '#1e3a8a'; // Lacivert mavi ton
+  ctx.font = 'bold 36px Sans';
+  ctx.fillText(`Hoş geldin, ${name}!`, 40, 80);
 
-  ctx.fillStyle = '#ffffff';
-  ctx.font = '30px Sans';
-  ctx.fillText(name, 50, 110);
+  // Üye numarası
+  ctx.fillStyle = '#475569'; // Gri ton
+  ctx.font = '28px Sans';
+  ctx.fillText(`Sunucuya katılan ${member}. üyesin.`, 40, 130);
 
-  ctx.fillStyle = '#cccccc';
-  ctx.font = '24px Sans';
-  ctx.fillText(`Üye: ${member}`, 50, 160);
-
+  // Avatar çizimi
   if (avatar) {
     try {
       const img = await loadImage(avatar);
+      const centerX = 600;
+      const centerY = 80;
+      const radius = 80;
+
+      // Yuvarlak kesme
+      ctx.save();
       ctx.beginPath();
-      ctx.arc(650, 120, 80, 0, Math.PI * 2);
+      ctx.arc(centerX + radius / 2, centerY + radius / 2, radius, 0, Math.PI * 2);
+      ctx.closePath();
       ctx.clip();
-      ctx.drawImage(img, 570, 40, 160, 160);
+
+      ctx.drawImage(img, centerX, centerY, radius * 2, radius * 2);
+      ctx.restore();
     } catch (e) {
       console.log("Avatar yüklenemedi:", e.message);
     }
   }
 
+  // PNG olarak gönder
   const buffer = await canvas.encode('png');
   res.setHeader('Content-Type', 'image/png');
   res.send(buffer);
