@@ -1,55 +1,48 @@
-import { createCanvas, loadImage, registerFont } from '@napi-rs/canvas';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { createCanvas, loadImage, registerFont } from 'canvas';
 import fs from 'fs';
+import path from 'path';
 
 export default async function handler(req, res) {
-  const { name = 'Misafir', avatar, member = '??' } = req.query;
+  const { name = 'Kullanıcı', avatar } = req.query;
 
-  // __dirname ayarı (ESM için)
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
-
-  // Fontu register et (dosya projenin köküne koyulmalı /fonts klasörü içinde)
-  const fontPath = path.join(__dirname, '../../../public/fonts/OpenSans-Bold.ttf');
-  if (fs.existsSync(fontPath)) {
-    registerFont(fontPath, { family: 'Open Sans' });
-  }
-
-  const canvas = createCanvas(800, 300);
+  const width = 800;
+  const height = 400;
+  const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
 
-  ctx.fillStyle = '#0f172a';
-  ctx.fillRect(0, 0, 800, 300);
-
-  ctx.fillStyle = '#3b82f6';
-  ctx.font = 'bold 40px "Open Sans"';
-  ctx.fillText('HOŞ GELDİN!', 50, 70);
-
+  // Arka plan rengi
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 28px "Open Sans"';
-  ctx.fillText(`Kullanıcı: ${name}`, 50, 120);
+  ctx.fillRect(0, 0, width, height);
 
-  ctx.fillStyle = '#cbd5e1';
-  ctx.font = '24px "Open Sans"';
-  ctx.fillText(`Sunucu üye sayısı: ${member}`, 50, 165);
+  // Başlık
+  ctx.fillStyle = '#1E3A8A'; // Mavi renk
+  ctx.font = 'bold 40px sans-serif';
+  ctx.fillText('HOŞ GELDİN', 50, 80);
 
+  // Kullanıcı adı
+  ctx.fillStyle = '#111827'; // Siyahımsı
+  ctx.font = 'bold 28px sans-serif';
+  ctx.fillText(`Kullanıcı: ${name}`, 50, 150);
+
+  // Avatar çizimi
   if (avatar) {
     try {
-      const img = await loadImage(avatar);
-      ctx.save();
+      const avatarImg = await loadImage(avatar);
+      const avatarSize = 128;
+      const avatarX = width - avatarSize - 50;
+      const avatarY = 50;
+
       ctx.beginPath();
-      ctx.arc(725, 135, 75, 0, Math.PI * 2, true);
+      ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2, true);
       ctx.closePath();
       ctx.clip();
-      ctx.drawImage(img, 650, 60, 150, 150);
-      ctx.restore();
-    } catch (e) {
-      console.log('Avatar yüklenemedi:', e.message);
+      ctx.drawImage(avatarImg, avatarX, avatarY, avatarSize, avatarSize);
+    } catch (err) {
+      console.error('Avatar yüklenemedi:', err);
     }
   }
 
-  const buffer = await canvas.encode('png');
+  const buffer = canvas.toBuffer('image/png');
   res.setHeader('Content-Type', 'image/png');
   res.send(buffer);
 }
