@@ -1,47 +1,52 @@
-import { createCanvas, loadImage, registerFont } from 'canvas';
-import fs from 'fs';
-import path from 'path';
+import { createCanvas, loadImage } from '@napi-rs/canvas';
+import fetch from 'node-fetch';
 
 export default async function handler(req, res) {
-  const { name = 'Kullanıcı', avatar } = req.query;
+  const { username = 'Kullanıcı', avatar } = req.query;
 
-  const width = 800;
-  const height = 400;
+  const width = 1024;
+  const height = 450;
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
 
-  // Arka plan rengi
-  ctx.fillStyle = '#ffffff';
+  // Arkaplan rengi
+  ctx.fillStyle = '#111827'; // koyu gri
   ctx.fillRect(0, 0, width, height);
 
-  // Başlık
-  ctx.fillStyle = '#1E3A8A'; // Mavi renk
-  ctx.font = 'bold 40px sans-serif';
-  ctx.fillText('HOŞ GELDİN', 50, 80);
-
-  // Kullanıcı adı
-  ctx.fillStyle = '#111827'; // Siyahımsı
-  ctx.font = 'bold 28px sans-serif';
-  ctx.fillText(`Kullanıcı: ${name}`, 50, 150);
-
-  // Avatar çizimi
+  // Kullanıcı avatarını çiz
   if (avatar) {
     try {
-      const avatarImg = await loadImage(avatar);
-      const avatarSize = 128;
-      const avatarX = width - avatarSize - 50;
-      const avatarY = 50;
+      const response = await fetch(avatar);
+      const buffer = await response.arrayBuffer();
+      const img = await loadImage(Buffer.from(buffer));
+      
+      const avatarX = 60;
+      const avatarY = 100;
+      const avatarSize = 256;
 
+      // Daire içine kırp
+      ctx.save();
       ctx.beginPath();
-      ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2, true);
+      ctx.arc(avatarX + avatarSize/2, avatarY + avatarSize/2, avatarSize/2, 0, Math.PI * 2, true);
       ctx.closePath();
       ctx.clip();
-      ctx.drawImage(avatarImg, avatarX, avatarY, avatarSize, avatarSize);
+      ctx.drawImage(img, avatarX, avatarY, avatarSize, avatarSize);
+      ctx.restore();
     } catch (err) {
       console.error('Avatar yüklenemedi:', err);
     }
   }
 
+  // Yazı rengi ve font
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 50px sans-serif';
+  ctx.fillText(`Hoş geldin, ${username}!`, 350, 180);
+
+  ctx.font = '30px sans-serif';
+  ctx.fillStyle = '#cccccc';
+  ctx.fillText(`Sunucumuza katıldığın için mutluyuz.`, 350, 240);
+
+  // Görseli döndür
   const buffer = canvas.toBuffer('image/png');
   res.setHeader('Content-Type', 'image/png');
   res.send(buffer);
