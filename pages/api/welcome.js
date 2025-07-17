@@ -1,47 +1,48 @@
-import { createCanvas, loadImage, registerFont } from "canvas";
-import fetch from "node-fetch";
+import { createCanvas, loadImage } from '@napi-rs/canvas';
+import { NextResponse } from 'next/server';
 
-export default async function handler(req, res) {
-  const { username = "Kullanıcı", avatar } = req.query;
+export const config = {
+  runtime: 'edge',
+};
 
-  const canvas = createCanvas(700, 250);
-  const ctx = canvas.getContext("2d");
+export default async function handler(req) {
+  const { searchParams } = new URL(req.url);
+  const username = searchParams.get('username') || 'Kullanıcı';
 
-  // Arka plan
-  ctx.fillStyle = "#0d162e"; // Lacivert ton
+  const canvas = createCanvas(800, 250);
+  const ctx = canvas.getContext('2d');
+
+  // Arka plan rengi
+  ctx.fillStyle = '#1e1e2f';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Avatar çerçevesi
-  ctx.fillStyle = "#000000";
-  ctx.beginPath();
-  ctx.arc(125, 125, 90, 0, Math.PI * 2, true);
-  ctx.closePath();
-  ctx.fill();
-
-  // Avatar resmi
-  if (avatar) {
+  // Kullanıcı fotoğrafı (yuvarlak)
+  const avatarURL = searchParams.get('avatar');
+  if (avatarURL) {
     try {
-      const response = await fetch(avatar);
-      const buffer = await response.buffer();
-      const avatarImage = await loadImage(buffer);
+      const avatar = await loadImage(avatarURL);
       ctx.save();
       ctx.beginPath();
-      ctx.arc(125, 125, 85, 0, Math.PI * 2, true);
+      ctx.arc(125, 125, 100, 0, Math.PI * 2, true);
       ctx.closePath();
       ctx.clip();
-      ctx.drawImage(avatarImage, 40, 40, 170, 170);
+      ctx.drawImage(avatar, 25, 25, 200, 200);
       ctx.restore();
-    } catch (err) {
-      console.error("Avatar yüklenemedi:", err);
+    } catch (e) {
+      console.error('Avatar yüklenemedi:', e);
     }
   }
 
-  // Yazı rengi ve stil
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 36px Sans"; // Font yüklemek istemediğini söyledin, sistem fontu kullandım
+  // Yazı: Hoşgeldin, Kullanıcı!
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 36px Sans';
   ctx.fillText(`Hoşgeldin, ${username}!`, 250, 140);
 
-  // Görseli gönder
-  res.setHeader("Content-Type", "image/png");
-  canvas.createPNGStream().pipe(res);
+  const buffer = canvas.toBuffer('image/png');
+
+  return new NextResponse(buffer, {
+    headers: {
+      'Content-Type': 'image/png',
+    },
+  });
 }
