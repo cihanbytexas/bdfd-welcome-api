@@ -2,46 +2,58 @@ import { createCanvas, loadImage } from '@napi-rs/canvas';
 import fetch from 'node-fetch';
 
 export default async function handler(req, res) {
-  const { username = "Kullanıcı", avatar } = req.query;
+  const { username = 'User', avatar } = req.query;
 
-  // Kanvas ayarları
+  if (!avatar) {
+    return res.status(400).json({ error: 'Avatar URL gerekli' });
+  }
+
+  // Tuval oluştur
   const width = 800;
   const height = 250;
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
 
   // Arka plan rengi
-  ctx.fillStyle = '#1e1e2f'; // koyu mavi-gri arka plan
+  ctx.fillStyle = '#2C2F33';
   ctx.fillRect(0, 0, width, height);
 
-  // Yazı ayarları
+  // Hoşgeldin yazısı
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 40px Sans';
-  ctx.fillText(`Hoşgeldin, ${username}!`, 250, 120);
+  ctx.font = 'bold 40px sans-serif';
+  ctx.fillText('Hoş Geldin,', 250, 100);
 
-  // Avatar işle
+  // Kullanıcı adı
+  ctx.font = 'bold 35px sans-serif';
+  ctx.fillStyle = '#7289DA';
+  ctx.fillText(username, 250, 160);
+
   try {
-    const avatarURL = avatar?.startsWith('http') ? avatar : `https://cdn.discordapp.com/avatars/${avatar}.png?size=256`;
-    const avatarImg = await loadImage(avatarURL);
+    // Avatarı indir ve çiz
+    const avatarRes = await fetch(avatar);
+    const avatarBuffer = await avatarRes.arrayBuffer();
+    const avatarImg = await loadImage(Buffer.from(avatarBuffer));
 
-    // Yuvarlak avatar çiz
+    // Avatar dairesi
     const avatarSize = 180;
-    const avatarX = 40;
-    const avatarY = 35;
+    const x = 40;
+    const y = 35;
 
     ctx.save();
     ctx.beginPath();
-    ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2, true);
+    ctx.arc(x + avatarSize / 2, y + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2, true);
     ctx.closePath();
     ctx.clip();
-    ctx.drawImage(avatarImg, avatarX, avatarY, avatarSize, avatarSize);
-    ctx.restore();
-  } catch (error) {
-    console.error("Avatar yüklenemedi:", error.message);
-  }
 
-  // Sonuç
-  const buffer = canvas.toBuffer('image/png');
-  res.setHeader('Content-Type', 'image/png');
-  res.send(buffer);
+    ctx.drawImage(avatarImg, x, y, avatarSize, avatarSize);
+    ctx.restore();
+
+    // Görseli döndür
+    const buffer = await canvas.encode('png');
+    res.setHeader('Content-Type', 'image/png');
+    res.send(buffer);
+  } catch (error) {
+    console.error('Hata:', error);
+    res.status(500).json({ error: 'Görsel oluşturulamadı' });
+  }
 }
