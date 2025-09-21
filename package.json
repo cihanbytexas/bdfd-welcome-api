@@ -1,20 +1,38 @@
 {
   "name": "welcome-card-api",
-  "version": "1.0.0",
-  "description": "Vercel API for Discord Welcome Cards",
+  "version": "2.0.0",
+  "description": "Advanced welcome card generator API with background images and custom text for Vercel",
   "main": "index.js",
-  "engines": {
-    "node": "22.x"
-  },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
+    "dev": "vercel dev",
+    "build": "echo 'Build completed'",
+    "start": "vercel",
+    "test": "curl -X POST http://localhost:3000/api/welcome-card -H 'Content-Type: application/json' -d '{\"username\": \"TestUser\"}' --output test-card.png"
   },
   "dependencies": {
-    "node-fetch": "^2.6.7",
-    "next": "13.5.2",
-    "react": "18.2.0",
-    "react-dom": "18.2.0"
-  }
+    "canvas": "^2.11.2"
+  },
+  "devDependencies": {
+    "@vercel/node": "^3.0.0"
+  },
+  "keywords": [
+    "api",
+    "welcome-card",
+    "vercel",
+    "canvas",
+    "image-generation",
+    "discord-bot",
+    "background-image",
+    "custom-text"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/welcome-card-api"
+  },
+  "homepage": "https://github.com/yourusername/welcome-card-api#readme"
 }
