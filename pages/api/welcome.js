@@ -2,8 +2,8 @@ import path from "path";
 import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
 
 // Font yolları
-const regularFont = path.resolve(process.cwd(), "public", "fonts", "Poppins-Regular.ttf");
-const boldFont = path.resolve(process.cwd(), "public", "fonts", "Poppins-Bold.ttf");
+const regularFont = path.resolve(process.cwd(), "public", "fonts/Poppins-Regular.ttf");
+const boldFont = path.resolve(process.cwd(), "public", "fonts/Poppins-Bold.ttf");
 
 // Fontları yükle
 try {
@@ -61,12 +61,12 @@ export default async function handler(req, res) {
     ctx.fillStyle = "rgba(255,255,255,0.7)";
     ctx.fillText("Glad to have you here 🎉", 220, 270);
 
-    // PNG olarak döndür
+    // PNG çıktısı
     const buffer = canvas.toBuffer("image/png");
     res.setHeader("Content-Type", "image/png");
     res.send(buffer);
   } catch (err) {
-    console.error(err);
+    console.error("❌ Genel hata:", err);
     res.status(500).json({ error: err.message });
   }
 }
