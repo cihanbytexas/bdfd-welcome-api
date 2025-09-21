@@ -2,8 +2,8 @@ import path from "path";
 import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
 
 // Font yolları
-const regularFont = path.resolve(process.cwd(), "public", "fonts/Poppins-Regular.ttf");
-const boldFont = path.resolve(process.cwd(), "public", "fonts/Poppins-Bold.ttf");
+const regularFont = path.resolve(process.cwd(), "public/fonts/Poppins-Regular.ttf");
+const boldFont = path.resolve(process.cwd(), "public/fonts/Poppins-Bold.ttf");
 
 // Fontları yükle
 try {
@@ -21,15 +21,35 @@ export default async function handler(req, res) {
     const body = req.body || {};
     const username = (body.username || "Guest").toString().slice(0, 40);
     const avatar = body.avatar;
+    const bgColor = body.bgColor || "#0f1724";
+    const bgImage = body.bgImage || null;
+    const blur = parseInt(body.blur) || 0;
 
     const WIDTH = 800;
     const HEIGHT = 400;
     const canvas = createCanvas(WIDTH, HEIGHT);
     const ctx = canvas.getContext("2d");
 
-    // Arkaplan
-    ctx.fillStyle = "#0f1724";
+    // Arkaplan renk
+    ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+    // Arkaplan resmi
+    if (bgImage) {
+      try {
+        const img = await loadImage(bgImage);
+        ctx.globalAlpha = 1.0;
+        ctx.drawImage(img, 0, 0, WIDTH, HEIGHT);
+        // Blur ekle
+        if (blur > 0) {
+          ctx.filter = `blur(${blur}px)`;
+          ctx.drawImage(img, 0, 0, WIDTH, HEIGHT);
+          ctx.filter = "none";
+        }
+      } catch (err) {
+        console.error("❌ Arkaplan resmi yükleme hatası:", err.message);
+      }
+    }
 
     // Avatar
     if (avatar) {
@@ -61,10 +81,10 @@ export default async function handler(req, res) {
     ctx.fillStyle = "rgba(255,255,255,0.7)";
     ctx.fillText("Glad to have you here 🎉", 220, 270);
 
-    // PNG çıktısı
+    // PNG -> base64 JSON
     const buffer = canvas.toBuffer("image/png");
-    res.setHeader("Content-Type", "image/png");
-    res.send(buffer);
+    const base64Image = buffer.toString("base64");
+    res.status(200).json({ image: `data:image/png;base64,${base64Image}` });
   } catch (err) {
     console.error("❌ Genel hata:", err);
     res.status(500).json({ error: err.message });
