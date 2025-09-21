@@ -9,14 +9,13 @@ const boldFont = path.resolve(process.cwd(), "public", "fonts", "Poppins-Bold.tt
 try {
   GlobalFonts.registerFromPath(regularFont, "Poppins");
   GlobalFonts.registerFromPath(boldFont, "Poppins-Bold");
+  console.log("✅ Fontlar yüklendi");
 } catch (e) {
-  console.error("Font yükleme hatası:", e);
+  console.error("❌ Font yükleme hatası:", e);
 }
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   try {
     const body = req.body || {};
@@ -44,7 +43,7 @@ export default async function handler(req, res) {
         ctx.drawImage(img, 20, 120, 160, 160);
         ctx.restore();
       } catch (err) {
-        console.error("Avatar yükleme hatası:", err.message);
+        console.error("❌ Avatar yükleme hatası:", err.message);
       }
     }
 
@@ -62,7 +61,7 @@ export default async function handler(req, res) {
     ctx.fillStyle = "rgba(255,255,255,0.7)";
     ctx.fillText("Glad to have you here 🎉", 220, 270);
 
-    // PNG çıktısı
+    // PNG olarak döndür
     const buffer = canvas.toBuffer("image/png");
     res.setHeader("Content-Type", "image/png");
     res.send(buffer);
