@@ -1,5 +1,4 @@
 import path from "path";
-import fs from "fs";
 import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
 
 // Font yolları
@@ -21,7 +20,7 @@ export default async function handler(req, res) {
   try {
     const body = req.body || {};
     const username = (body.username || "Guest").toString().slice(0, 40);
-    const avatar = body.avatar;
+    const avatar = body.avatar || null;
     const bgColor = body.bgColor || "#0f1724";
     const bgImage = body.bgImage || null;
     const blur = parseInt(body.blur) || 0;
@@ -79,19 +78,13 @@ export default async function handler(req, res) {
     // Alt yazı
     ctx.font = "20px Poppins, sans-serif";
     ctx.fillStyle = "rgba(255,255,255,0.7)";
-    ctx.fillText("Glad to have you here 🎉", 220, 270);
+    ctx.fillText("Glad to have you here! ", 220, 270);
 
-    // PNG dosya yolu
-    const tmpDir = path.resolve(process.cwd(), "public/tmp");
-    if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
-    const filePath = path.join(tmpDir, "welcome.png");
+    // PNG -> base64 JSON (BDFD ile attachment için)
+    const buffer = canvas.toBuffer("image/png");
+    const base64Image = buffer.toString("base64");
 
-    fs.writeFileSync(filePath, canvas.toBuffer("image/png"));
-
-    // Public URL
-    const imageUrl = `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}/tmp/welcome.png`;
-
-    res.status(200).json({ url: imageUrl });
+    res.status(200).json({ image: `data:image/png;base64,${base64Image}` });
   } catch (err) {
     console.error("❌ Genel hata:", err);
     res.status(500).json({ error: err.message });
