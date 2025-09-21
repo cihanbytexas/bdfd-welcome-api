@@ -1,25 +1,19 @@
-import path from "path";
+import fetch from "node-fetch";
 import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
-
-// Font yolları
-const regularFont = path.resolve(process.cwd(), "public/fonts/Poppins-Regular.ttf");
-const boldFont = path.resolve(process.cwd(), "public/fonts/Poppins-Bold.ttf");
+import path from "path";
 
 // Fontları yükle
-try {
-  GlobalFonts.registerFromPath(regularFont, "Poppins");
-  GlobalFonts.registerFromPath(boldFont, "Poppins-Bold");
-  console.log("✅ Fontlar yüklendi");
-} catch (e) {
-  console.error("❌ Font yükleme hatası:", e);
-}
+const regularFont = path.resolve(process.cwd(), "public/fonts/Poppins-Regular.ttf");
+const boldFont = path.resolve(process.cwd(), "public/fonts/Poppins-Bold.ttf");
+GlobalFonts.registerFromPath(regularFont, "Poppins");
+GlobalFonts.registerFromPath(boldFont, "Poppins-Bold");
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   try {
     const body = req.body || {};
-    const username = (body.username || "Guest").toString().slice(0, 40);
+    const username = (body.username || "Guest").slice(0, 40);
     const avatar = body.avatar || null;
     const bgColor = body.bgColor || "#0f1724";
     const bgImage = body.bgImage || null;
@@ -30,7 +24,7 @@ export default async function handler(req, res) {
     const canvas = createCanvas(WIDTH, HEIGHT);
     const ctx = canvas.getContext("2d");
 
-    // Arkaplan renk
+    // Arkaplan rengi
     ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
@@ -45,9 +39,7 @@ export default async function handler(req, res) {
           ctx.drawImage(img, 0, 0, WIDTH, HEIGHT);
           ctx.filter = "none";
         }
-      } catch (err) {
-        console.error("❌ Arkaplan resmi yükleme hatası:", err.message);
-      }
+      } catch (err) { console.error(err); }
     }
 
     // Avatar
@@ -61,32 +53,39 @@ export default async function handler(req, res) {
         ctx.clip();
         ctx.drawImage(img, 20, 120, 160, 160);
         ctx.restore();
-      } catch (err) {
-        console.error("❌ Avatar yükleme hatası:", err.message);
-      }
+      } catch (err) { console.error(err); }
     }
 
-    // Başlık
+    // Yazılar
     ctx.fillStyle = "#ffffff";
     ctx.font = "40px Poppins-Bold, sans-serif";
     ctx.fillText("Welcome to the server,", 220, 150);
 
-    // Kullanıcı adı
     ctx.font = "50px Poppins-Bold, sans-serif";
     ctx.fillText(username, 220, 220);
 
-    // Alt yazı
     ctx.font = "20px Poppins, sans-serif";
     ctx.fillStyle = "rgba(255,255,255,0.7)";
-    ctx.fillText("Glad to have you here! ", 220, 270);
+    ctx.fillText("Glad to have you here!", 220, 270);
 
-    // PNG -> base64 JSON (BDFD ile attachment için)
+    // Canvas -> Buffer -> Base64
     const buffer = canvas.toBuffer("image/png");
     const base64Image = buffer.toString("base64");
 
-    res.status(200).json({ image: `data:image/png;base64,${base64Image}` });
+    // Upload to ImgBB
+    const imgbbApiKey = "b9db5cf8217dccada264cff99e9742bd"; // senin key
+    const imgbbRes = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbApiKey}`, {
+      method: "POST",
+      body: new URLSearchParams({ image: base64Image })
+    });
+    const imgbbJson = await imgbbRes.json();
+
+    if (!imgbbJson.success) return res.status(500).json({ error: "ImgBB upload failed" });
+
+    // Direkt link döndür
+    res.status(200).json({ url: imgbbJson.data.url });
   } catch (err) {
-    console.error("❌ Genel hata:", err);
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 }
