@@ -1,47 +1,62 @@
-import { createCanvas, loadImage, registerFont } from 'canvas';
-import fetch from 'node-fetch';
-import path from 'path';
-
-// Fontları kaydet
-registerFont(path.join(process.cwd(), 'public/fonts/Poppins-Regular.ttf'), { family: 'Poppins', weight: 'normal' });
-registerFont(path.join(process.cwd(), 'public/fonts/Poppins-Bold.ttf'), { family: 'Poppins', weight: 'bold' });
+import { createCanvas, loadImage } from "canvas";
 
 export default async function handler(req, res) {
-    const { username = "Guest", avatarURL } = req.query;
+  try {
+    const { username = "Guest", avatar, bgImage } = req.query;
 
-    if (!avatarURL) return res.status(400).send("Avatar URL gerekli!");
-
-    // Canvas oluştur
-    const width = 700;
-    const height = 250;
+    // Canvas boyutu
+    const width = 800;
+    const height = 400;
     const canvas = createCanvas(width, height);
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
 
-    // Arka plan
-    ctx.fillStyle = "#1E1E2F"; // koyu mavi
-    ctx.fillRect(0, 0, width, height);
+    // Arka plan resmi
+    if (bgImage) {
+      try {
+        const background = await loadImage(bgImage);
+        ctx.drawImage(background, 0, 0, width, height);
+      } catch (e) {
+        ctx.fillStyle = "#1a1a2e";
+        ctx.fillRect(0, 0, width, height);
+      }
+    } else {
+      ctx.fillStyle = "#1a1a2e";
+      ctx.fillRect(0, 0, width, height);
+    }
 
-    // Avatar
-    const avatar = await loadImage(avatarURL);
-    const avatarSize = 180;
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(125 + avatarSize/2, height/2, avatarSize/2, 0, Math.PI * 2);
-    ctx.closePath();
-    ctx.clip();
-    ctx.drawImage(avatar, 125, (height-avatarSize)/2, avatarSize, avatarSize);
-    ctx.restore();
+    // Avatar (yuvarlak)
+    if (avatar) {
+      try {
+        const avatarImg = await loadImage(avatar);
+        const size = 180;
+        const x = 50;
+        const y = height / 2 - size / 2;
 
-    // Yazılar
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 40px Poppins';
-    ctx.fillText(`Welcome, ${username}!`, 300, 130);
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2, true);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(avatarImg, x, y, size, size);
+        ctx.restore();
+      } catch (e) {
+        console.log("Avatar yüklenemedi:", e.message);
+      }
+    }
 
-    ctx.font = '28px Poppins';
-    ctx.fillStyle = '#00aaff';
-    ctx.fillText('to our Discord server!', 300, 180);
+    // Hoş geldin yazısı
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 40px Poppins, sans-serif";
+    ctx.fillText("Welcome to the Server 🎉", 260, 170);
 
-    // Resmi PNG olarak gönder
-    res.setHeader('Content-Type', 'image/png');
-    res.send(canvas.toBuffer('image/png'));
+    ctx.font = "bold 35px Poppins, sans-serif";
+    ctx.fillText(username, 260, 230);
+
+    // PNG çıktısı
+    res.setHeader("Content-Type", "image/png");
+    res.send(canvas.toBuffer("image/png"));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Bir hata oluştu" });
+  }
 }
