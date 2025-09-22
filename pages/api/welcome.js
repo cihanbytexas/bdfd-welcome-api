@@ -7,7 +7,7 @@ import path from "path";
 const fontPath = path.resolve("./public/fonts/Poppins-Bold.ttf");
 registerFont(fontPath, { family: "Poppins" });
 
-const IMGBB_KEY = "BURAYA_IMGBB_KEYIN"; // imgbb API key
+const IMGBB_KEY = "b9db5cf8217dccada264cff99e9742bd"; // imgbb API key
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
