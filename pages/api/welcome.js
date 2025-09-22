@@ -13,8 +13,8 @@ export default async function handler(req, res) {
   try {
     // Font
     registerFont(path.resolve("./public/fonts/Poppins-Bold.ttf"), { family: "Poppins", weight: "bold" });
+    registerFont(path.resolve("./public/fonts/Poppins-Regular.ttf"), { family: "Poppins", weight: "regular" });
 
-    // Canvas
     const width = 800;
     const height = 400;
     const canvas = createCanvas(width, height);
@@ -56,6 +56,7 @@ export default async function handler(req, res) {
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 40px Poppins";
     ctx.fillText("Welcome To Server 🎉", 260, 170);
+
     ctx.font = "bold 35px Poppins";
     ctx.fillText(username, 260, 230);
 
@@ -74,9 +75,8 @@ export default async function handler(req, res) {
     const imageUrl = imgbbRes.data.data.url;
 
     res.status(200).json({ image: imageUrl });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
   }
-      }
+}
