@@ -6,15 +6,23 @@ import path from "path";
 const IMGBB_KEY = "b9db5cf8217dccada264cff99e9742bd";
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ error: "Only POST allowed" });
+  if (req.method !== "POST")
+    return res.status(405).json({ error: "Only POST allowed" });
 
   const { username = "Guest", avatar, background } = req.body;
 
   try {
-    // Font
-    registerFont(path.resolve("./public/fonts/Poppins-Bold.ttf"), { family: "Poppins", weight: "bold" });
-    registerFont(path.resolve("./public/fonts/Poppins-Regular.ttf"), { family: "Poppins", weight: "regular" });
+    // Font register
+    registerFont(path.resolve("./public/fonts/Poppins-Bold.ttf"), {
+      family: "Poppins",
+      weight: "bold",
+    });
+    registerFont(path.resolve("./public/fonts/Poppins-Regular.ttf"), {
+      family: "Poppins",
+      weight: "regular",
+    });
 
+    // Canvas
     const width = 800;
     const height = 400;
     const canvas = createCanvas(width, height);
@@ -44,7 +52,7 @@ export default async function handler(req, res) {
 
         ctx.save();
         ctx.beginPath();
-        ctx.arc(x + size/2, y + size/2, size/2, 0, Math.PI*2, true);
+        ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2, true);
         ctx.closePath();
         ctx.clip();
         ctx.drawImage(avatarImg, x, y, size, size);
@@ -68,9 +76,11 @@ export default async function handler(req, res) {
     const form = new FormData();
     form.append("image", base64);
 
-    const imgbbRes = await axios.post(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, form, {
-      headers: form.getHeaders()
-    });
+    const imgbbRes = await axios.post(
+      `https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`,
+      form,
+      { headers: form.getHeaders() }
+    );
 
     const imageUrl = imgbbRes.data.data.url;
 
