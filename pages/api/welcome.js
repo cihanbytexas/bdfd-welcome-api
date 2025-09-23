@@ -23,9 +23,9 @@ export default async function handler(req, res) {
       borderColor = "#FF0000"
     } = req.body;
 
-    // Canvas yatay 16:9
-    const width = 1920;
-    const height = 1080;
+    // Canvas diktörgen (banner)
+    const width = 1200;
+    const height = 400;
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext("2d");
 
@@ -38,38 +38,34 @@ export default async function handler(req, res) {
       ctx.fillRect(0, 0, width, height);
     }
 
-    // İçerik uç kutusu
-    const boxWidth = width * 0.7;
-    const boxHeight = height * 0.8;
-    const boxX = (width - boxWidth) / 2;
-    const boxY = (height - boxHeight) / 2;
-
     // Avatar
-    const avatarSize = 260;
-    const avatarX = width / 2 - avatarSize / 2;
-    const avatarY = boxY + 50;
+    const avatarSize = 120;
+    const avatarX = 50;
+    const avatarY = height / 2 - avatarSize / 2;
     try {
       const avatarImg = await loadImage(avatar);
       ctx.save();
       ctx.beginPath();
-      ctx.arc(width / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2, true);
+      ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2, true);
       ctx.closePath();
       ctx.clip();
       ctx.drawImage(avatarImg, avatarX, avatarY, avatarSize, avatarSize);
       ctx.restore();
     } catch {}
 
-    // Yazılar
-    const drawCenteredText = (text, y, fontSize, color, weight = "bold") => {
-      ctx.fillStyle = color;
-      ctx.font = `${weight} ${fontSize}px Poppins`;
-      const textWidth = ctx.measureText(text).width;
-      ctx.fillText(text, boxX + (boxWidth - textWidth) / 2, y);
-    };
+    // Yazılar (avatarın sağında ortalanmış)
+    const textStartX = avatarX + avatarSize + 50;
 
-    drawCenteredText(welcomeText, avatarY + avatarSize + 100, 80, textColor);
-    drawCenteredText(username.toUpperCase(), avatarY + avatarSize + 200, 60, textColor);
-    drawCenteredText(customText.toUpperCase(), avatarY + avatarSize + 300, 50, borderColor);
+    ctx.fillStyle = textColor;
+    ctx.font = `bold 60px Poppins`;
+    ctx.fillText(welcomeText, textStartX, height / 2 - 40);
+
+    ctx.font = `bold 40px Poppins`;
+    ctx.fillText(username.toUpperCase(), textStartX, height / 2 + 20);
+
+    ctx.fillStyle = borderColor;
+    ctx.font = `bold 30px Poppins`;
+    ctx.fillText(customText, textStartX, height / 2 + 70);
 
     // Canvas → Buffer → Base64
     const buffer = canvas.toBuffer("image/png");
