@@ -3,11 +3,11 @@ import FormData from "form-data";
 import axios from "axios";
 import path from "path";
 
-// Font
+// Poppins fontu public/fonts içinde olmalı
 const fontPath = path.resolve("./public/fonts/Poppins-Bold.ttf");
 registerFont(fontPath, { family: "Poppins" });
 
-const IMGBB_KEY = "b9db5cf8217dccada264cff99e9742bd";
+const IMGBB_KEY = "b9db5cf8217dccada264cff99e9742bd"; // imgbb API key
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
@@ -23,8 +23,9 @@ export default async function handler(req, res) {
       borderColor = "#FF0000"
     } = req.body;
 
-    const width = 1920;
-    const height = 1080;
+    // Canvas diktörgen (banner)
+    const width = 1200;
+    const height = 400;
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext("2d");
 
@@ -37,16 +38,10 @@ export default async function handler(req, res) {
       ctx.fillRect(0, 0, width, height);
     }
 
-    // Dikdörtgen kutu
-    const boxWidth = width * 0.7;
-    const boxHeight = height * 0.8;
-    const boxX = (width - boxWidth) / 2;
-    const boxY = (height - boxHeight) / 2;
-
-    // Avatar (sol köşeye ve daha büyük)
-    const avatarSize = 360; // büyütüldü
-    const avatarX = boxX + 50; // sol köşe + biraz boşluk
-    const avatarY = boxY + 50;
+    // Avatar
+    const avatarSize = 300;
+    const avatarX = 50;
+    const avatarY = height / 2 - avatarSize / 2;
     try {
       const avatarImg = await loadImage(avatar);
       ctx.save();
@@ -58,19 +53,21 @@ export default async function handler(req, res) {
       ctx.restore();
     } catch {}
 
-    // Yazılar
-    const drawText = (text, x, y, fontSize, color, weight = "bold") => {
-      ctx.fillStyle = color;
-      ctx.font = `${weight} ${fontSize}px Poppins`;
-      ctx.fillText(text, x, y);
-    };
-
-    // Sol köşeye göre yazılar
+    // Yazılar (avatarın sağında ortalanmış)
     const textStartX = avatarX + avatarSize + 50;
-    drawText(welcomeText, textStartX, avatarY + 80, 80, textColor);
-    drawText(username.toUpperCase(), textStartX, avatarY + 180, 60, textColor);
-    drawText(customText.toUpperCase(), textStartX, avatarY + 280, 50, borderColor);
 
+    ctx.fillStyle = textColor;
+    ctx.font = `bold 60px Poppins`;
+    ctx.fillText(welcomeText, textStartX, height / 2 - 40);
+
+    ctx.font = `bold 40px Poppins`;
+    ctx.fillText(username.toUpperCase(), textStartX, height / 2 + 20);
+
+    ctx.fillStyle = borderColor;
+    ctx.font = `bold 30px Poppins`;
+    ctx.fillText(customText, textStartX, height / 2 + 70);
+
+    // Canvas → Buffer → Base64
     const buffer = canvas.toBuffer("image/png");
     const base64 = buffer.toString("base64");
 
